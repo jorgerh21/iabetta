@@ -22,7 +22,7 @@ export const PecesModule = {
                             <th>Disponible</th>
                             <th>Salud</th>
                             <th class="text-end">Acciones</th>
-                        </tr>
+                        </table>
                     </thead>
                     <tbody>
                         <tr v-for="pez in lista" :key="pez.id_pece" class="align-middle" style="cursor:pointer" @click="verDetalle(pez)">
@@ -196,8 +196,7 @@ export const PecesModule = {
                                     <tr><th>Precio:</th><td class="text-success fw-bold">{{ formatPrice(pezSeleccionado.precio) }}</td></tr>
                                     <tr><th>Disponible:</th><td><span :class="['badge', pezSeleccionado.disponible_venta ? 'bg-success' : 'bg-secondary']">{{ pezSeleccionado.disponible_venta ? 'Si' : 'No' }}</span></td></tr>
                                     <tr><th>Descripcion venta:</th><td>{{ pezSeleccionado.descripcion_venta || 'Sin descripcion' }}</td></tr>
-                                    <tr><th>Salud:</th><td>{{ pezSeleccionado.estado_salud || '--' }}Ru%
-
+                                    <tr><th>Salud:</th><td>{{ pezSeleccionado.estado_salud || '--' }}</td></tr>
                                     <tr><th>Observaciones:</th><td>{{ pezSeleccionado.observaciones_salud || '--' }}</td></tr>
                                 </table>
                             </div>
@@ -249,8 +248,6 @@ export const PecesModule = {
     },
     computed: {
         baseUrl() {
-            // Extraer la base del servidor desde apiUrl
-            // Ejemplo: "https://iabetta.sitioz.com/api/index.php" -> "https://iabetta.sitioz.com"
             const match = this.apiUrl.match(/^(https?:\/\/[^\/]+)/);
             return match ? match[1] : '';
         }
@@ -258,12 +255,9 @@ export const PecesModule = {
     methods: {
         getImageUrl(photoPath) {
             if (!photoPath) return '';
-            // Si ya es una URL absoluta (http:// o https://), devolverla sin cambios
             if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
                 return photoPath;
             }
-            // Si es relativa, concatenar con la base del servidor
-            // Asumimos que las imágenes están en la raíz o en una carpeta como 'uploads/'
             return this.baseUrl + '/' + photoPath.replace(/^\/+/, '');
         },
         formatPrice(value) {
@@ -324,7 +318,6 @@ export const PecesModule = {
         },
         onFotoSeleccionada(e) {
             this.archivoFoto = e.target.files[0];
-            // Para vista previa, podemos crear una URL temporal
             if (this.archivoFoto) {
                 const reader = new FileReader();
                 reader.onload = (ev) => {
@@ -415,7 +408,6 @@ export const PecesModule = {
                 }
                 body = formData;
             } else {
-                // Si no hay nueva foto, enviamos los datos incluyendo la foto existente (si es string)
                 body = JSON.stringify(this.form);
             }
 
