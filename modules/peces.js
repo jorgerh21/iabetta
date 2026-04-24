@@ -224,8 +224,7 @@ export const PecesModule = {
                 foto: null,
                 precio: null,
                 disponible_venta: false,
-                estado_salud: '',
-                // resto de campos opcionales
+                estado_salud: ''
             },
             form: {
                 id_pece: null,
@@ -252,11 +251,37 @@ export const PecesModule = {
             if (value === null || value === undefined) return 'N/A';
             return '$' + parseFloat(value).toFixed(2);
         },
+        enriquecerListaPeces() {
+            const especiesMap = new Map();
+            this.especies.forEach(esp => {
+                especiesMap.set(esp.id_especie, {
+                    nombre: esp.nombre_cientifico,
+                    variedad: esp.variedad
+                });
+            });
+            const acuariosMap = new Map();
+            this.acuarios.forEach(ac => {
+                acuariosMap.set(ac.id_acuario, ac.nombre_identificador);
+            });
+
+            this.lista = this.lista.map(pez => {
+                const especieInfo = especiesMap.get(pez.id_especie) || {};
+                return {
+                    ...pez,
+                    especie_nombre: especieInfo.nombre || 'Desconocida',
+                    variedad: especieInfo.variedad || '',
+                    nombre_acuario: acuariosMap.get(pez.id_acuario) || `ID: ${pez.id_acuario}`
+                };
+            });
+        },
         async cargarPeces() {
             try {
                 const res = await fetch(this.apiUrl + '/peces', { credentials: 'include' });
                 if (res.ok) {
                     this.lista = await res.json();
+                    if (this.especies.length && this.acuarios.length) {
+                        this.enriquecerListaPeces();
+                    }
                 } else if (res.status === 401) {
                     this.$root.cerrarSesion();
                 }
@@ -266,11 +291,17 @@ export const PecesModule = {
         },
         async cargarEspecies() {
             const res = await fetch(this.apiUrl + '/especies', { credentials: 'include' });
-            if (res.ok) this.especies = await res.json();
+            if (res.ok) {
+                this.especies = await res.json();
+                if (this.lista.length) this.enriquecerListaPeces();
+            }
         },
         async cargarAcuarios() {
             const res = await fetch(this.apiUrl + '/acuarios', { credentials: 'include' });
-            if (res.ok) this.acuarios = await res.json();
+            if (res.ok) {
+                this.acuarios = await res.json();
+                if (this.lista.length) this.enriquecerListaPeces();
+            }
         },
         onFotoSeleccionada(e) {
             this.archivoFoto = e.target.files[0];
@@ -306,7 +337,6 @@ export const PecesModule = {
             this.form.disponible_venta = !!this.form.disponible_venta;
         },
         verDetalle(pez) {
-            // Clonar y garantizar que precio existe como número
             this.pezSeleccionado = JSON.parse(JSON.stringify(pez));
             if (this.pezSeleccionado.precio === undefined) this.pezSeleccionado.precio = null;
             const modal = new bootstrap.Modal(document.getElementById('modalDetallePez'));
@@ -392,9 +422,12 @@ export const PecesModule = {
             }
         }
     },
-    mounted() {
-        this.cargarEspecies();
-        this.cargarAcuarios();
-        this.cargarPeces();
+    async mounted() {
+        await Promise.all([
+            this.cargarEspecies(),
+            this.cargarAcuarios(),
+            this.cargarPeces()
+        ]);
+        this.enriquecerListaPeces();
     }
 };
