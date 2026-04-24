@@ -200,7 +200,7 @@ export const AcuariosModule = {
     data() {
         return {
             lista: [],                 // acuarios
-            mantenimientos: [],        // todos los registros de mantenimiento_parametros
+            mantenimientos: [],        // todos los registros de parametros
             editando: false,
             acuarioSeleccionado: null,
             form: {
@@ -240,7 +240,7 @@ export const AcuariosModule = {
         },
         async cargarMantenimientos() {
             try {
-                const res = await fetch(`${this.apiUrl}/mantenimiento_parametros`, { credentials: 'include' });
+                const res = await fetch(`${this.apiUrl}/parametros`, { credentials: 'include' });
                 if (res.ok) this.mantenimientos = await res.json();
                 else if (res.status === 401) this.$root.cerrarSesion();
             } catch (e) { console.error(e); }
@@ -374,7 +374,7 @@ export const AcuariosModule = {
                 datos.dureza_gh = datos.dureza_gh ? Number(datos.dureza_gh) : null;
                 datos.dureza_kh = datos.dureza_kh ? Number(datos.dureza_kh) : null;
                 
-                const res = await fetch(`${this.apiUrl}/mantenimiento_parametros`, {
+                const res = await fetch(`${this.apiUrl}/parametros`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
