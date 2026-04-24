@@ -27,7 +27,7 @@ export const PecesModule = {
                     <tbody>
                         <tr v-for="pez in lista" :key="pez.id_pece" class="align-middle" style="cursor:pointer" @click="verDetalle(pez)">
                             <td style="width: 60px;">
-                                <img v-if="pez.foto" :src="pez.foto" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+                                <img v-if="pez.foto" :src="getImageUrl(pez.foto)" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
                                 <div v-else class="bg-secondary rounded-circle d-inline-block" style="width:40px; height:40px;"></div>
                             </td>
                             <td>
@@ -150,7 +150,7 @@ export const PecesModule = {
                                 <label class="form-label small">Foto (URL o subir)</label>
                                 <input type="file" @change="onFotoSeleccionada" class="form-control custom-input" accept="image/*">
                                 <div v-if="form.foto" class="mt-2">
-                                    <img :src="form.foto" width="60" class="rounded">
+                                    <img :src="getImageUrl(form.foto)" width="60" class="rounded">
                                     <button @click="form.foto = null" type="button" class="btn btn-sm btn-danger ms-2">X</button>
                                 </div>
                             </div>
@@ -179,7 +179,7 @@ export const PecesModule = {
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-4 text-center">
-                                <img v-if="pezSeleccionado.foto" :src="pezSeleccionado.foto" class="img-fluid rounded" style="max-height: 200px;">
+                                <img v-if="pezSeleccionado.foto" :src="getImageUrl(pezSeleccionado.foto)" class="img-fluid rounded" style="max-height: 200px;">
                                 <div v-else class="bg-secondary rounded p-5 text-white">Sin foto</div>
                             </div>
                             <div class="col-md-8">
@@ -196,7 +196,8 @@ export const PecesModule = {
                                     <tr><th>Precio:</th><td class="text-success fw-bold">{{ formatPrice(pezSeleccionado.precio) }}</td></tr>
                                     <tr><th>Disponible:</th><td><span :class="['badge', pezSeleccionado.disponible_venta ? 'bg-success' : 'bg-secondary']">{{ pezSeleccionado.disponible_venta ? 'Si' : 'No' }}</span></td></tr>
                                     <tr><th>Descripcion venta:</th><td>{{ pezSeleccionado.descripcion_venta || 'Sin descripcion' }}</td></tr>
-                                    <tr><th>Salud:</th><td>{{ pezSeleccionado.estado_salud || '--' }}</td></tr>
+                                    <tr><th>Salud:</th><td>{{ pezSeleccionado.estado_salud || '--' }}Ru%
+
                                     <tr><th>Observaciones:</th><td>{{ pezSeleccionado.observaciones_salud || '--' }}</td></tr>
                                 </table>
                             </div>
@@ -246,7 +247,25 @@ export const PecesModule = {
             }
         };
     },
+    computed: {
+        baseUrl() {
+            // Extraer la base del servidor desde apiUrl
+            // Ejemplo: "https://iabetta.sitioz.com/api/index.php" -> "https://iabetta.sitioz.com"
+            const match = this.apiUrl.match(/^(https?:\/\/[^\/]+)/);
+            return match ? match[1] : '';
+        }
+    },
     methods: {
+        getImageUrl(photoPath) {
+            if (!photoPath) return '';
+            // Si ya es una URL absoluta (http:// o https://), devolverla sin cambios
+            if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
+                return photoPath;
+            }
+            // Si es relativa, concatenar con la base del servidor
+            // Asumimos que las imágenes están en la raíz o en una carpeta como 'uploads/'
+            return this.baseUrl + '/' + photoPath.replace(/^\/+/, '');
+        },
         formatPrice(value) {
             if (value === null || value === undefined) return 'N/A';
             return '$' + parseFloat(value).toFixed(2);
@@ -305,6 +324,16 @@ export const PecesModule = {
         },
         onFotoSeleccionada(e) {
             this.archivoFoto = e.target.files[0];
+            // Para vista previa, podemos crear una URL temporal
+            if (this.archivoFoto) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    this.form.foto = ev.target.result;
+                };
+                reader.readAsDataURL(this.archivoFoto);
+            } else {
+                this.form.foto = null;
+            }
         },
         prepararNuevo() {
             this.editando = false;
@@ -375,7 +404,7 @@ export const PecesModule = {
             if (this.archivoFoto) {
                 const formData = new FormData();
                 for (let key in this.form) {
-                    if (this.form[key] !== null && this.form[key] !== undefined) {
+                    if (this.form[key] !== null && this.form[key] !== undefined && key !== 'foto') {
                         formData.append(key, this.form[key]);
                     }
                 }
@@ -386,6 +415,7 @@ export const PecesModule = {
                 }
                 body = formData;
             } else {
+                // Si no hay nueva foto, enviamos los datos incluyendo la foto existente (si es string)
                 body = JSON.stringify(this.form);
             }
 
