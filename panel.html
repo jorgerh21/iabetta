@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IABETTA - Fish Manager</title>
+    <title>IABETTA - Panel de Administración</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
@@ -13,27 +13,32 @@
     <div id="app">
         <nav class="navbar navbar-dark sticky-top custom-nav" v-if="logeado">
             <div class="container">
-                <a class="navbar-brand d-flex align-items-center" href="#">
+                <a class="navbar-brand d-flex align-items-center" href="index.html">
                     <img src="logo.png" alt="IABETTA" width="40" height="40" class="me-2 logo-glow">
-                    <span class="fw-bold">IABETTA</span>
+                    <span class="fw-bold">IABETTA - Admin</span>
                 </a>
-                <button @click="cerrarSesion" class="btn btn-outline-danger btn-sm border-0">Salir</button>
+                <div class="d-flex gap-2">
+                    <button @click="cerrarSesion" class="btn btn-outline-danger btn-sm border-0">
+                        Salir
+                    </button>
+                </div>
             </div>
         </nav>
 
-        <main class="container py-4">
+        <main class="container-fluid py-4">
+            <!-- Mismo login que index.html -->
             <div v-if="!logeado" class="row justify-content-center align-items-center" style="min-height: 85vh;">
                 <div class="col-12 col-sm-8 col-md-5 col-lg-4">
                     <div class="card-custom p-4 shadow-lg text-center">
                         <img src="logo.png" width="100" class="logo-glow mb-3">
-                        <h3 class="fw-bold text-white mb-1">IABETTA</h3>
-                        <p class="text-muted small mb-4">Gesti贸n de Gen茅tica y Criadero</p>
+                        <h3 class="fw-bold text-white mb-1">Acceso Administrativo</h3>
+                        <p class="text-muted small mb-4">Panel de control</p>
                         
                         <div class="text-start">
                             <label class="small text-muted mb-1">Usuario</label>
                             <input v-model="formLogin.usuario" type="text" class="form-control mb-3 custom-input">
                             
-                            <label class="small text-muted mb-1">Contrase帽a</label>
+                            <label class="small text-muted mb-1">Contraseña</label>
                             <input v-model="formLogin.password" @keyup.enter="hacerLogin" type="password" class="form-control mb-4 custom-input">
                             
                             <button @click="hacerLogin" class="btn btn-primary w-100 py-2 fw-bold">ENTRAR</button>
@@ -43,25 +48,9 @@
                 </div>
             </div>
 
+            <!-- Panel de admin (solo cuando está logeado) -->
             <div v-else>
-                <div class="d-flex gap-2 mb-4 justify-content-center">
-                    <button @click="seccion = 'acuarios'" :class="['btn btn-nav', seccion === 'acuarios' ? 'active' : '']">
-                        馃摝 Estantes
-                    </button>
-                    <button @click="seccion = 'peces'" :class="['btn btn-nav', seccion === 'peces' ? 'active' : '']">
-                        馃悷 Peces
-                    </button>
-                    <button @click="seccion = 'puestas'" :class="['btn btn-nav', seccion === 'puestas' ? 'active' : '']">
-                        馃К Reproducci贸n
-                    </button>
-                    <button @click="seccion = 'parametros'" :class="['btn btn-nav', seccion === 'parametros' ? 'active' : '']">
-                        馃挧 Par谩metros
-                    </button>
-                </div>
-
-                <transition name="fade" mode="out-in">
-                    <component :is="moduloActual" :api-url="apiBase"></component>
-                </transition>
+                <modulo-panel :api-url="apiBase"></modulo-panel>
             </div>
         </main>
     </div>

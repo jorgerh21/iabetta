@@ -1,0 +1,208 @@
+:root {
+    --primary: #00f2ff;
+    --dark-bg: #0b0e14;
+    --card-bg: #161b22;
+    --input-bg: #0d1117;
+    --text-white: #f0f6fc;
+    --accent-red: #ff4b4b;
+}
+
+body {
+    background-color: var(--dark-bg);
+    color: var(--text-white);
+    font-family: 'Inter', sans-serif;
+}
+
+/* ===== NAVBAR ===== */
+.custom-nav {
+    background-color: rgba(22, 27, 34, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0, 242, 255, 0.2);
+}
+
+.logo-glow {
+    filter: drop-shadow(0 0 8px var(--primary));
+}
+
+/* ===== TARJETAS Y CONTENEDORES ===== */
+.card-custom {
+    background: var(--card-bg);
+    border: 1px solid #30363d;
+    border-radius: 16px;
+}
+
+/* ===== INPUTS PERSONALIZADOS ===== */
+.custom-input {
+    background-color: var(--input-bg);
+    border: 1px solid #30363d;
+    color: white;
+    border-radius: 8px;
+}
+
+.custom-input:focus {
+    background-color: var(--input-bg);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 0 0 0.25rem rgba(0, 242, 255, 0.1);
+}
+
+/* ===== BOTONES DE NAVEGACIÓN ===== */
+.btn-nav {
+    background: #21262d;
+    color: #8b949e;
+    border: 1px solid #30363d;
+    padding: 12px 24px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.btn-nav.active {
+    background: var(--primary);
+    color: #0b0e14;
+    border-color: var(--primary);
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: #0b0e14;
+}
+
+.btn-primary:hover {
+    background-color: #00d8e4;
+    border-color: #00d8e4;
+    color: #0b0e14;
+}
+
+/* ===== BOTÓN DE MANTENIMIENTO ===== */
+.btn-outline-info {
+    color: #00f2ff;
+    border-color: #00f2ff;
+}
+
+.btn-outline-info:hover {
+    background-color: #00f2ff;
+    color: #0b0e14;
+}
+
+/* ===== TABLAS ===== */
+.table {
+    color: var(--text-white);
+}
+
+.table-dark td,
+.table-dark th {
+    color: #e6edf3;
+}
+
+/* ===== BADGES ===== */
+.badge {
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+}
+
+.badge-sano {
+    background: rgba(0, 255, 127, 0.1);
+    color: #00ff7f;
+    border: 1px solid #00ff7f;
+}
+
+.bg-secondary {
+    background-color: #495057 !important;
+    color: #fff;
+}
+
+.bg-warning.text-dark {
+    color: #212529 !important;
+}
+
+/* ===== TEXTOS AUXILIARES ===== */
+.text-muted {
+    color: #8b949e !important;
+}
+
+.extra-small {
+    font-size: 0.7rem;
+    color: #8b949e;
+}
+
+/* ===== MEJORAS PARA FECHAS Y CONTRASTE (CRÍTICO) ===== */
+/* Fechas de último y próximo mantenimiento */
+.text-info {
+    color: #00f2ff !important;
+    font-weight: 600;
+}
+
+.text-warning {
+    color: #ffaa00 !important;
+    font-weight: 600;
+}
+
+/* Forzar visibilidad en tarjetas */
+.card-custom .text-info,
+.card-custom .text-warning {
+    font-size: 0.85rem;
+    margin-bottom: 2px;
+}
+
+/* Valores de las fechas (el texto que sigue a las etiquetas) */
+.card-custom .text-info + div,
+.card-custom .text-warning + div {
+    color: #ffffff !important;
+    font-weight: 500;
+    margin-left: 4px;
+    display: inline-block;
+}
+
+/* Asegurar que el texto de las fechas sea blanco brillante */
+.card-custom .small,
+.card-custom div:not(.text-info):not(.text-warning) {
+    color: #e6edf3;
+}
+
+/* Fondo sutil para la sección de fechas */
+.card-custom .mt-2.small {
+    background-color: rgba(0, 242, 255, 0.05);
+    padding: 8px;
+    border-radius: 10px;
+    margin-top: 12px !important;
+}
+
+/* ===== MODALES ===== */
+.modal-content .form-label,
+.modal-content .form-check-label {
+    color: #c9d1d9 !important;
+    font-weight: 500;
+}
+
+.modal-content .form-control,
+.modal-content .form-select {
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+}
+
+.modal-content .form-control:focus,
+.modal-content .form-select:focus {
+    background-color: #0d1117;
+    color: #f0f6fc;
+    border-color: #00f2ff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 242, 255, 0.25);
+}
+
+.modal-content .form-control::placeholder {
+    color: #6c757d;
+}
+
+/* ===== ANIMACIONES ===== */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
