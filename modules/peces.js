@@ -40,7 +40,7 @@ export const PecesModule = {
                                 </span>
                             </td>
                             <td>{{ pez.nombre_acuario || 'ID: '+pez.id_acuario }}</td>
-                            <td class="fw-bold text-success">${{ pez.precio ? pez.precio.toFixed(2) : 'N/A' }}</td>
+                            <td class="fw-bold text-success">{{ formatPrice(pez.precio) }}</td>
                             <td>
                                 <span :class="['badge', pez.disponible_venta ? 'bg-success' : 'bg-secondary']">
                                     {{ pez.disponible_venta ? 'Si' : 'No' }}
@@ -193,7 +193,7 @@ export const PecesModule = {
                                     <tr><th>Color:</th><td>{{ pezSeleccionado.color_principal || '--' }}</td></tr>
                                     <tr><th>Ingreso:</th><td>{{ pezSeleccionado.fecha_ingreso || '--' }}</td></tr>
                                     <tr><th>Procedencia:</th><td>{{ pezSeleccionado.procedencia || '--' }}</td></tr>
-                                    <tr><th>Precio:</th><td class="text-success fw-bold">${{ pezSeleccionado.precio ? pezSeleccionado.precio.toFixed(2) : 'N/A' }}</td></tr>
+                                    <tr><th>Precio:</th><td class="text-success fw-bold">{{ formatPrice(pezSeleccionado.precio) }}</td></tr>
                                     <tr><th>Disponible:</th><td><span :class="['badge', pezSeleccionado.disponible_venta ? 'bg-success' : 'bg-secondary']">{{ pezSeleccionado.disponible_venta ? 'Si' : 'No' }}</span></td></tr>
                                     <tr><th>Descripcion venta:</th><td>{{ pezSeleccionado.descripcion_venta || 'Sin descripcion' }}</td></tr>
                                     <tr><th>Salud:</th><td>{{ pezSeleccionado.estado_salud || '--' }}</td></tr>
@@ -218,7 +218,15 @@ export const PecesModule = {
             acuarios: [],
             editando: false,
             archivoFoto: null,
-            pezSeleccionado: {},
+            pezSeleccionado: {
+                id_pece: null,
+                nombre_pez: '',
+                foto: null,
+                precio: null,
+                disponible_venta: false,
+                estado_salud: '',
+                // resto de campos opcionales
+            },
             form: {
                 id_pece: null,
                 id_especie: null,
@@ -240,6 +248,10 @@ export const PecesModule = {
         };
     },
     methods: {
+        formatPrice(value) {
+            if (value === null || value === undefined) return 'N/A';
+            return '$' + parseFloat(value).toFixed(2);
+        },
         async cargarPeces() {
             try {
                 const res = await fetch(this.apiUrl + '/peces', { credentials: 'include' });
@@ -294,7 +306,9 @@ export const PecesModule = {
             this.form.disponible_venta = !!this.form.disponible_venta;
         },
         verDetalle(pez) {
+            // Clonar y garantizar que precio existe como número
             this.pezSeleccionado = JSON.parse(JSON.stringify(pez));
+            if (this.pezSeleccionado.precio === undefined) this.pezSeleccionado.precio = null;
             const modal = new bootstrap.Modal(document.getElementById('modalDetallePez'));
             modal.show();
         },
