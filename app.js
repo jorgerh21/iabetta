@@ -16,7 +16,7 @@ const app = createApp({
     },
     data() {
         return {
-            seccion: 'acuarios',
+            seccion: 'peces',
             logeado: false,
             apiBase: 'https://api.sitioz.com/', 
             formLogin: { usuario: '', password: '' },
@@ -65,7 +65,7 @@ const app = createApp({
                     this.errorLogin = data.message || "Acceso incorrecto";
                 }
             } catch (e) {
-                this.errorLogin = "Error de conexi¨®n";
+                this.errorLogin = "Error de conexion";
             }
         },
         async cerrarSesion() {

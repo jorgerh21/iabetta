@@ -45,11 +45,11 @@
 
             <div v-else>
                 <div class="d-flex gap-2 mb-4 justify-content-center">
+                     <button @click="seccion = 'peces'" :class="['btn btn-nav', seccion === 'peces' ? 'active' : '']">
+                        🐟 Peces
+                    </button>
                     <button @click="seccion = 'acuarios'" :class="['btn btn-nav', seccion === 'acuarios' ? 'active' : '']">
                         📦 Estantes
-                    </button>
-                    <button @click="seccion = 'peces'" :class="['btn btn-nav', seccion === 'peces' ? 'active' : '']">
-                        🐟 Peces
                     </button>
                     <button @click="seccion = 'puestas'" :class="['btn btn-nav', seccion === 'puestas' ? 'active' : '']">
                         🧬 Reproducción
