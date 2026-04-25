@@ -11,6 +11,7 @@ export const PecesModule = {
 
         <div class="card card-custom border-secondary shadow-sm">
             <div class="table-responsive position-relative" style="min-height: 200px;">
+                <!-- Loader de tabla -->
                 <div v-if="cargando" class="position-absolute top-50 start-50 translate-middle text-center">
                     <div class="spinner-border text-info" role="status">
                         <span class="visually-hidden">Cargando...</span>
@@ -69,7 +70,7 @@ export const PecesModule = {
                                     Borrar
                                 </button>
                             </td>
-                        </td>
+                        </tr>
                         <tr v-if="(!lista || lista.length === 0) && !cargando">
                             <td colspan="8" class="text-center text-muted py-4">No hay peces registrados</td>
                         </tr>
@@ -78,8 +79,168 @@ export const PecesModule = {
             </div>
         </div>
 
-        <!-- Modal para crear/editar pez (igual que antes, pero no lo copio entero por brevedad, lo dejaremos igual) -->
-        <!-- ... el resto del template se mantiene igual ... -->
+        <!-- Modal para crear/editar pez -->
+        <div class="modal fade" id="modalPez" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content card-custom border-secondary">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title text-info fw-bold">{{ editando ? 'Editar Pez' : 'Registrar Nuevo Pez' }}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div v-if="cargando" class="text-center py-5">
+                            <div class="spinner-border text-info" role="status">
+                                <span class="visually-hidden">Guardando...</span>
+                            </div>
+                            <div class="mt-2">Procesando, por favor espere...</div>
+                        </div>
+                        <div v-else>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small">Nombre del pez</label>
+                                    <input v-model="form.nombre_pez" type="text" class="form-control custom-input" placeholder="Ej: Azulito">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Especie / Variedad</label>
+                                    <select v-model="form.id_especie" class="form-select custom-input">
+                                        <option v-for="esp in especies" :value="esp.id_especie">
+                                            {{ esp.nombre_cientifico }} - {{ esp.variedad }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">Sexo</label>
+                                    <select v-model="form.sexo" class="form-select custom-input">
+                                        <option value="Macho">Macho</option>
+                                        <option value="Hembra">Hembra</option>
+                                        <option value="Alevin/Sin sexar">Alevin/Sin sexar</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">Acuario</label>
+                                    <select v-model="form.id_acuario" class="form-select custom-input">
+                                        <option v-for="ac in acuarios" :value="ac.id_acuario">{{ ac.nombre_identificador }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">Estado salud</label>
+                                    <select v-model="form.estado_salud" class="form-select custom-input" @change="actualizarDisponibilidadPorSalud">
+                                        <option value="Sano">Sano</option>
+                                        <option value="Enfermo">Enfermo</option>
+                                        <option value="En Tratamiento">En Tratamiento</option>
+                                        <option value="Fallecido">Fallecido</option>
+                                        <option value="Vendido">Vendido</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Fecha ingreso</label>
+                                    <input v-model="form.fecha_ingreso" type="date" class="form-control custom-input">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Procedencia</label>
+                                    <input v-model="form.procedencia" type="text" class="form-control custom-input">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Fecha nacimiento (aprox)</label>
+                                    <input v-model="form.fecha_nacimiento" type="date" class="form-control custom-input">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Tamaño (cm)</label>
+                                    <input v-model.number="form.tamaño_cm" type="number" step="0.1" class="form-control custom-input">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Color principal</label>
+                                    <input v-model="form.color_principal" type="text" class="form-control custom-input">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Precio de venta ($)</label>
+                                    <input v-model.number="form.precio" type="number" step="0.01" class="form-control custom-input" :disabled="!form.disponible_venta">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Disponible para venta</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" v-model="form.disponible_venta" id="disponibleVenta" :disabled="!puedeSerDisponible()">
+                                        <label class="form-check-label" for="disponibleVenta">Sí</label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small">Descripción corta (para chatbot)</label>
+                                    <textarea v-model="form.descripcion_venta" class="form-control custom-input" rows="2" placeholder="Texto atractivo para mostrar en WhatsApp"></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Foto (URL o subir)</label>
+                                    <input type="file" @change="onFotoSeleccionada" class="form-control custom-input" accept="image/*">
+                                    <div v-if="form.foto" class="mt-2">
+                                        <img :src="getImageUrl(form.foto)" width="60" class="rounded">
+                                        <button @click="form.foto = null" type="button" class="btn btn-sm btn-danger ms-2">X</button>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small">Observaciones salud</label>
+                                    <textarea v-model="form.observaciones_salud" class="form-control custom-input" rows="2"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-dark" data-bs-dismiss="modal" :disabled="cargando">Cancelar</button>
+                        <button @click="guardar" class="btn btn-primary px-4 fw-bold" :disabled="cargando">
+                            <span v-if="cargando" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Guardar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de DETALLE del pez -->
+        <div class="modal fade" id="modalDetallePez" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content card-custom border-secondary">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title text-info fw-bold">Detalle de {{ pezSeleccionado.nombre_pez || 'Pez' }}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div v-if="cargando" class="text-center py-5">
+                            <div class="spinner-border text-info" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                        <div v-else>
+                            <div class="row">
+                                <div class="col-md-4 text-center">
+                                    <img v-if="pezSeleccionado.foto" :src="getImageUrl(pezSeleccionado.foto)" class="img-fluid rounded" style="max-height: 200px;">
+                                    <div v-else class="bg-secondary rounded p-5 text-white">Sin foto</div>
+                                </div>
+                                <div class="col-md-8">
+                                    <table class="table table-sm table-borderless text-white">
+                                        <tr><th>Nombre:</th><td>{{ pezSeleccionado.nombre_pez || '--' }}</td></td>
+                                        <tr><th>Especie:</th><td>{{ pezSeleccionado.especie_nombre || (especiesMap[pezSeleccionado.id_especie] ? especiesMap[pezSeleccionado.id_especie].nombre_cientifico : 'ID: '+pezSeleccionado.id_especie) }} - {{ pezSeleccionado.variedad || (especiesMap[pezSeleccionado.id_especie] ? especiesMap[pezSeleccionado.id_especie].variedad : '') }}</td></tr>
+                                        <tr><th>Sexo:</th><td>{{ pezSeleccionado.sexo || '--' }}</td></tr>
+                                        <tr><th>Acuario:</th><td>{{ pezSeleccionado.nombre_acuario || (acuariosMap[pezSeleccionado.id_acuario] ? acuariosMap[pezSeleccionado.id_acuario].nombre_identificador : 'ID: '+pezSeleccionado.id_acuario) }}</td></tr>
+                                        <tr><th>Nacimiento:</th><td>{{ pezSeleccionado.fecha_nacimiento || 'Desconocida' }}</td></tr>
+                                        <tr><th>Tamaño:</th><td>{{ pezSeleccionado.tamaño_cm ? pezSeleccionado.tamaño_cm + ' cm' : '--' }}</td></tr>
+                                        <tr><th>Color:</th><td>{{ pezSeleccionado.color_principal || '--' }}</td></tr>
+                                        <tr><th>Ingreso:</th><td>{{ pezSeleccionado.fecha_ingreso || '--' }}</td></tr>
+                                        <tr><th>Procedencia:</th><td>{{ pezSeleccionado.procedencia || '--' }}</td></tr>
+                                        <tr><th>Precio:</th><td class="text-success fw-bold">{{ formatPrice(pezSeleccionado.precio) }}</td></tr>
+                                        <tr><th>Disponible:</th><td><span :class="['badge', pezSeleccionado.disponible_venta ? 'bg-success' : 'bg-secondary']">{{ pezSeleccionado.disponible_venta ? 'Sí' : 'No' }}</span></td></tr>
+                                        <tr><th>Descripción venta:</th><td>{{ pezSeleccionado.descripcion_venta || 'Sin descripción' }}</td></tr>
+                                        <tr><th>Salud:</th><td :class="getEstadoSaludClass(pezSeleccionado.estado_salud, true)">{{ pezSeleccionado.estado_salud || '--' }}</td></tr>
+                                        <tr><th>Observaciones:</th><td>{{ pezSeleccionado.observaciones_salud || '--' }}</td></tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button v-if="pezSeleccionado.disponible_venta && pezSeleccionado.estado_salud !== 'Vendido'" class="btn btn-success" @click="simularVenta(pezSeleccionado)" :disabled="cargando">Marcar como Vendido</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     `,
     data() {
@@ -98,7 +259,24 @@ export const PecesModule = {
                 disponible_venta: false,
                 estado_salud: ''
             },
-            form: { /* ... mismo de antes ... */ }
+            form: {
+                id_pece: null,
+                id_especie: null,
+                id_acuario: null,
+                nombre_pez: '',
+                foto: null,
+                sexo: 'Alevin/Sin sexar',
+                fecha_nacimiento: null,
+                tamaño_cm: null,
+                color_principal: '',
+                fecha_ingreso: new Date().toISOString().slice(0, 10),
+                procedencia: '',
+                precio: null,
+                disponible_venta: true,
+                descripcion_venta: '',
+                estado_salud: 'Sano',
+                observaciones_salud: ''
+            }
         };
     },
     computed: {
@@ -106,7 +284,6 @@ export const PecesModule = {
             const match = this.apiUrl.match(/^(https?:\/\/[^\/]+)/);
             return match ? match[1] : '';
         },
-        // Mapas para acceso rápido en el template
         especiesMap() {
             const map = {};
             this.especies.forEach(esp => {
@@ -123,17 +300,45 @@ export const PecesModule = {
         }
     },
     methods: {
-        getImageUrl(photoPath) { /* ... igual ... */ },
-        formatPrice(value) { /* ... igual ... */ },
-        getEstadoSaludClass(estado) { /* ... igual ... */ },
-        puedeSerDisponible() { /* ... igual ... */ },
-        actualizarDisponibilidadPorSalud() { /* ... igual ... */ },
-        onFotoSeleccionada(e) { /* ... igual ... */ },
-        
-        // NUEVO método para enriquecer SIN eliminar peces
+        getImageUrl(photoPath) {
+            if (!photoPath) return '';
+            if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
+                return photoPath;
+            }
+            return this.baseUrl + '/' + photoPath.replace(/^\/+/, '');
+        },
+        formatPrice(value) {
+            if (value === null || value === undefined) return 'N/A';
+            return '$' + parseFloat(value).toFixed(2);
+        },
+        getEstadoSaludClass(estado, isTableCell = false) {
+            const baseClass = isTableCell ? '' : 'badge ';
+            switch (estado) {
+                case 'Sano':
+                    return baseClass + 'bg-success';
+                case 'Enfermo':
+                    return baseClass + 'bg-warning text-dark';
+                case 'En Tratamiento':
+                    return baseClass + 'bg-info text-dark';
+                case 'Fallecido':
+                    return baseClass + 'bg-secondary';
+                case 'Vendido':
+                    return baseClass + 'bg-primary';
+                default:
+                    return baseClass + 'bg-light text-dark';
+            }
+        },
+        puedeSerDisponible() {
+            const noVenta = ['Enfermo', 'En Tratamiento', 'Fallecido', 'Vendido'];
+            return !noVenta.includes(this.form.estado_salud);
+        },
+        actualizarDisponibilidadPorSalud() {
+            if (!this.puedeSerDisponible()) {
+                this.form.disponible_venta = false;
+            }
+        },
         enriquecerListaPeces() {
             if (!Array.isArray(this.lista)) return;
-            // Creamos mapas locales
             const especiesMap = new Map();
             this.especies.forEach(esp => {
                 especiesMap.set(esp.id_especie, {
@@ -146,7 +351,6 @@ export const PecesModule = {
                 acuariosMap.set(ac.id_acuario, ac.nombre_identificador);
             });
 
-            // Enriquecer cada pez, pero sin filtrar ninguno
             this.lista = this.lista.map(pez => {
                 if (!pez) return null;
                 const especieInfo = especiesMap.get(pez.id_especie) || {};
@@ -157,63 +361,190 @@ export const PecesModule = {
                     nombre_acuario: acuariosMap.get(pez.id_acuario) || null
                 };
             }).filter(pez => pez !== null);
-            
-            console.log('Peces después de enriquecer:', this.lista);
         },
-        
         async cargarPeces() {
             this.cargando = true;
             try {
                 const res = await fetch(this.apiUrl + '/peces', { credentials: 'include' });
                 if (res.ok) {
                     const data = await res.json();
-                    console.log('Datos recibidos de /peces:', data);
-                    // Asegurar que data sea un array
                     this.lista = Array.isArray(data) ? data : [];
-                    // Si no hay especies o acuarios aún, igual mostramos los peces (con IDs)
-                    // Luego cuando se carguen especies/acuarios se enriquecerán de nuevo
                     if (this.especies.length && this.acuarios.length) {
                         this.enriquecerListaPeces();
                     }
                 } else if (res.status === 401) {
                     this.$root.cerrarSesion();
                 } else {
-                    console.error('Error al cargar peces:', res.status);
                     this.lista = [];
                 }
             } catch (e) {
-                console.error('Excepción en cargarPeces:', e);
+                console.error(e);
                 this.lista = [];
             } finally {
                 this.cargando = false;
             }
         },
-        
         async cargarEspecies() {
             const res = await fetch(this.apiUrl + '/especies', { credentials: 'include' });
             if (res.ok) {
                 this.especies = await res.json();
-                console.log('Especies cargadas:', this.especies);
-                // Si ya hay peces, enriquecerlos
                 if (this.lista.length) this.enriquecerListaPeces();
             }
         },
-        
         async cargarAcuarios() {
             const res = await fetch(this.apiUrl + '/acuarios', { credentials: 'include' });
             if (res.ok) {
                 this.acuarios = await res.json();
-                console.log('Acuarios cargados:', this.acuarios);
                 if (this.lista.length) this.enriquecerListaPeces();
             }
         },
-        
-        prepararNuevo() { /* ... igual ... */ },
-        prepararEdicion(pez) { /* ... igual ... */ },
-        verDetalle(pez) { /* ... igual ... */ },
-        async simularVenta(pez) { /* ... igual ... */ },
-        async guardar() { /* ... igual ... */ },
-        async confirmarBorrado(id) { /* ... igual ... */ }
+        onFotoSeleccionada(e) {
+            this.archivoFoto = e.target.files[0];
+            if (this.archivoFoto) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    this.form.foto = ev.target.result;
+                };
+                reader.readAsDataURL(this.archivoFoto);
+            } else {
+                this.form.foto = null;
+            }
+        },
+        prepararNuevo() {
+            this.editando = false;
+            this.archivoFoto = null;
+            this.form = {
+                id_pece: null,
+                id_especie: this.especies[0] ? this.especies[0].id_especie : null,
+                id_acuario: this.acuarios[0] ? this.acuarios[0].id_acuario : null,
+                nombre_pez: '',
+                foto: null,
+                sexo: 'Alevin/Sin sexar',
+                fecha_nacimiento: null,
+                tamaño_cm: null,
+                color_principal: '',
+                fecha_ingreso: new Date().toISOString().slice(0, 10),
+                procedencia: '',
+                precio: null,
+                disponible_venta: true,
+                descripcion_venta: '',
+                estado_salud: 'Sano',
+                observaciones_salud: ''
+            };
+        },
+        prepararEdicion(pez) {
+            if (!pez) return;
+            this.editando = true;
+            this.archivoFoto = null;
+            this.form = JSON.parse(JSON.stringify(pez));
+            if (this.form.fecha_ingreso) this.form.fecha_ingreso = this.form.fecha_ingreso.slice(0, 10);
+            if (this.form.fecha_nacimiento) this.form.fecha_nacimiento = this.form.fecha_nacimiento.slice(0, 10);
+            this.form.disponible_venta = !!this.form.disponible_venta;
+            this.actualizarDisponibilidadPorSalud();
+        },
+        verDetalle(pez) {
+            if (!pez) return;
+            this.pezSeleccionado = JSON.parse(JSON.stringify(pez));
+            if (this.pezSeleccionado.precio === undefined) this.pezSeleccionado.precio = null;
+            const modal = new bootstrap.Modal(document.getElementById('modalDetallePez'));
+            modal.show();
+        },
+        async simularVenta(pez) {
+            if (!pez) return;
+            if (!confirm(`¿Marcar a ${pez.nombre_pez || pez.id_pece} como VENDIDO? Esto lo hará no disponible para venta.`)) return;
+            this.cargando = true;
+            try {
+                const payload = {
+                    disponible_venta: 0,
+                    estado_salud: 'Vendido'
+                };
+                const res = await fetch(this.apiUrl + '/peces/' + pez.id_pece, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    alert('Pez marcado como vendido');
+                    await this.cargarPeces();
+                    bootstrap.Modal.getInstance(document.getElementById('modalDetallePez')).hide();
+                } else {
+                    const error = await res.text();
+                    alert('Error: ' + error);
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                this.cargando = false;
+            }
+        },
+        async guardar() {
+            this.cargando = true;
+            let url = this.editando ? this.apiUrl + '/peces/' + this.form.id_pece : this.apiUrl + '/peces';
+            let metodo = this.editando ? 'PUT' : 'POST';
+            let body;
+
+            this.actualizarDisponibilidadPorSalud();
+
+            if (this.archivoFoto) {
+                const formData = new FormData();
+                for (let key in this.form) {
+                    if (this.form[key] !== null && this.form[key] !== undefined && key !== 'foto') {
+                        formData.append(key, this.form[key]);
+                    }
+                }
+                formData.append('foto', this.archivoFoto);
+                if (this.editando) {
+                    formData.append('_method', 'PUT');
+                    metodo = 'POST';
+                }
+                body = formData;
+            } else {
+                body = JSON.stringify(this.form);
+            }
+
+            try {
+                const res = await fetch(url, {
+                    method: metodo,
+                    headers: this.archivoFoto ? {} : { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: body
+                });
+                if (res.ok) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalPez'));
+                    if (modal) modal.hide();
+                    await this.cargarPeces();
+                } else if (res.status === 401) {
+                    this.$root.cerrarSesion();
+                } else {
+                    const error = await res.text();
+                    alert('Error: ' + error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error de red');
+            } finally {
+                this.cargando = false;
+            }
+        },
+        async confirmarBorrado(id) {
+            if (!id) return;
+            if (confirm('¿Borrar este pez?')) {
+                this.cargando = true;
+                try {
+                    const res = await fetch(this.apiUrl + '/peces/' + id, { method: 'DELETE', credentials: 'include' });
+                    if (res.ok) {
+                        await this.cargarPeces();
+                    } else if (res.status === 401) {
+                        this.$root.cerrarSesion();
+                    }
+                } catch (e) {
+                    console.error(e);
+                } finally {
+                    this.cargando = false;
+                }
+            }
+        }
     },
     async mounted() {
         await Promise.all([
@@ -221,7 +552,6 @@ export const PecesModule = {
             this.cargarAcuarios(),
             this.cargarPeces()
         ]);
-        // Al final, aseguramos enriquecimiento por si acaso
         if (this.especies.length && this.acuarios.length && this.lista.length) {
             this.enriquecerListaPeces();
         }
