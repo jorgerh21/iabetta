@@ -11,7 +11,6 @@ export const PecesModule = {
 
         <div class="card card-custom border-secondary shadow-sm">
             <div class="table-responsive position-relative" style="min-height: 200px;">
-                <!-- Loader de tabla -->
                 <div v-if="cargando" class="position-absolute top-50 start-50 translate-middle text-center">
                     <div class="spinner-border text-info" role="status">
                         <span class="visually-hidden">Cargando...</span>
@@ -36,7 +35,7 @@ export const PecesModule = {
                             <td style="width: 60px;">
                                 <img v-if="pez.foto" :src="getImageUrl(pez.foto)" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
                                 <div v-else class="bg-secondary rounded-circle d-inline-block" style="width:40px; height:40px;"></div>
-                            </td>
+                            </table>
                             <td>
                                 <div class="fw-bold">{{ pez.nombre_pez || 'Sin nombre' }}</div>
                                 <div class="text-muted small">{{ pez.especie_nombre || '?' }} - {{ pez.variedad || '?' }}</div>
@@ -54,7 +53,7 @@ export const PecesModule = {
                                 </span>
                             </td>
                             <td>
-                                <span :class="['badge', pez.estado_salud === 'Sano' ? 'badge-sano' : (pez.estado_salud === 'Enfermo' ? 'bg-warning text-dark' : 'bg-info')]">
+                                <span :class="getEstadoSaludClass(pez.estado_salud)">
                                     {{ pez.estado_salud }}
                                 </span>
                             </td>
@@ -75,7 +74,7 @@ export const PecesModule = {
             </div>
         </div>
 
-        <!-- Modal para crear/editar pez -->
+        <!-- Modal crear/editar -->
         <div class="modal fade" id="modalPez" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content card-custom border-secondary">
@@ -120,7 +119,7 @@ export const PecesModule = {
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label small">Estado salud</label>
-                                    <select v-model="form.estado_salud" class="form-select custom-input">
+                                    <select v-model="form.estado_salud" @change="actualizarDisponibilidadPorEstado" class="form-select custom-input">
                                         <option value="Sano">Sano</option>
                                         <option value="Enfermo">Enfermo</option>
                                         <option value="En Tratamiento">En Tratamiento</option>
@@ -150,12 +149,12 @@ export const PecesModule = {
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small">Precio de venta ($)</label>
-                                    <input v-model.number="form.precio" type="number" step="0.01" class="form-control custom-input">
+                                    <input v-model.number="form.precio" type="number" step="0.01" class="form-control custom-input" :disabled="!form.disponible_venta">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small">Disponible para venta</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" v-model="form.disponible_venta" id="disponibleVenta">
+                                        <input class="form-check-input" type="checkbox" v-model="form.disponible_venta" id="disponibleVenta" :disabled="!esEstadoVendible(form.estado_salud)">
                                         <label class="form-check-label" for="disponibleVenta">Si</label>
                                     </div>
                                 </div>
@@ -189,7 +188,7 @@ export const PecesModule = {
             </div>
         </div>
 
-        <!-- Modal de DETALLE del pez -->
+        <!-- Modal detalle -->
         <div class="modal fade" id="modalDetallePez" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content card-custom border-secondary">
@@ -223,8 +222,8 @@ export const PecesModule = {
                                         <tr><th>Precio:</th><td class="text-success fw-bold">{{ formatPrice(pezSeleccionado.precio) }}</td></tr>
                                         <tr><th>Disponible:</th><td><span :class="['badge', pezSeleccionado.disponible_venta ? 'bg-success' : 'bg-secondary']">{{ pezSeleccionado.disponible_venta ? 'Si' : 'No' }}</span></td></tr>
                                         <tr><th>Descripcion venta:</th><td>{{ pezSeleccionado.descripcion_venta || 'Sin descripcion' }}</td></tr>
-                                        <tr><th>Salud:</th><td>{{ pezSeleccionado.estado_salud || '--' }}</td></tr>
-                                        <tr><th>Observaciones:</th><td>{{ pezSeleccionado.observaciones_salud || '--' }}</td></tr>
+                                        <tr><th>Salud:</th><td><span :class="getEstadoSaludClass(pezSeleccionado.estado_salud)">{{ pezSeleccionado.estado_salud || '--' }}</span></td></tr>
+                                        <tr><th>Observaciones:</th><td>{{ pezSeleccionado.observaciones_salud || '--' }}</td></td>
                                     </table>
                                 </div>
                             </div>
@@ -282,6 +281,25 @@ export const PecesModule = {
         }
     },
     methods: {
+        esEstadoVendible(estado) {
+            return estado === 'Sano';
+        },
+        actualizarDisponibilidadPorEstado() {
+            // Si el estado no es 'Sano', entonces no puede estar disponible para venta
+            if (this.form.estado_salud !== 'Sano') {
+                this.form.disponible_venta = false;
+            }
+        },
+        getEstadoSaludClass(estado) {
+            const clases = {
+                'Sano': 'badge bg-success',
+                'Enfermo': 'badge bg-warning text-dark',
+                'En Tratamiento': 'badge bg-info text-dark',
+                'Fallecido': 'badge bg-secondary',
+                'Vendido': 'badge bg-danger'
+            };
+            return clases[estado] || 'badge bg-secondary';
+        },
         getImageUrl(photoPath) {
             if (!photoPath) return '';
             if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
@@ -331,7 +349,6 @@ export const PecesModule = {
             } catch (e) {
                 console.error(e);
             } finally {
-                // Pequeño retraso para evitar parpadeo (opcional)
                 setTimeout(() => { this.cargando = false; }, 300);
             }
         },
@@ -390,6 +407,8 @@ export const PecesModule = {
             if (this.form.fecha_ingreso) this.form.fecha_ingreso = this.form.fecha_ingreso.slice(0, 10);
             if (this.form.fecha_nacimiento) this.form.fecha_nacimiento = this.form.fecha_nacimiento.slice(0, 10);
             this.form.disponible_venta = !!this.form.disponible_venta;
+            // Asegurar que si el estado no es Sano, disponible_venta sea false
+            if (this.form.estado_salud !== 'Sano') this.form.disponible_venta = false;
         },
         verDetalle(pez) {
             this.pezSeleccionado = JSON.parse(JSON.stringify(pez));
