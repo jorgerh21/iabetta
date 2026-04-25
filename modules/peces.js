@@ -31,11 +31,11 @@ export const PecesModule = {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="pez in lista" :key="pez.id_pece" class="align-middle" style="cursor:pointer" @click="verDetalle(pez)">
+                        <tr v-for="pez in lista" :key="pez.id_pece" v-if="pez" class="align-middle" style="cursor:pointer" @click="verDetalle(pez)">
                             <td style="width: 60px;">
                                 <img v-if="pez.foto" :src="getImageUrl(pez.foto)" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
                                 <div v-else class="bg-secondary rounded-circle d-inline-block" style="width:40px; height:40px;"></div>
-                            </table>
+                            </td>
                             <td>
                                 <div class="fw-bold">{{ pez.nombre_pez || 'Sin nombre' }}</div>
                                 <div class="text-muted small">{{ pez.especie_nombre || '?' }} - {{ pez.variedad || '?' }}</div>
@@ -49,7 +49,7 @@ export const PecesModule = {
                             <td class="fw-bold text-success">{{ formatPrice(pez.precio) }}</td>
                             <td>
                                 <span :class="['badge', pez.disponible_venta ? 'bg-success' : 'bg-secondary']">
-                                    {{ pez.disponible_venta ? 'Si' : 'No' }}
+                                    {{ pez.disponible_venta ? 'Sí' : 'No' }}
                                 </span>
                             </td>
                             <td>
@@ -66,7 +66,7 @@ export const PecesModule = {
                                 </button>
                             </td>
                         </tr>
-                        <tr v-if="lista.length === 0">
+                        <tr v-if="!lista || lista.length === 0">
                             <td colspan="8" class="text-center text-muted py-4">No hay peces registrados</td>
                         </tr>
                     </tbody>
@@ -74,7 +74,7 @@ export const PecesModule = {
             </div>
         </div>
 
-        <!-- Modal crear/editar -->
+        <!-- Modal para crear/editar pez -->
         <div class="modal fade" id="modalPez" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content card-custom border-secondary">
@@ -119,7 +119,7 @@ export const PecesModule = {
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label small">Estado salud</label>
-                                    <select v-model="form.estado_salud" @change="actualizarDisponibilidadPorEstado" class="form-select custom-input">
+                                    <select v-model="form.estado_salud" class="form-select custom-input" @change="actualizarDisponibilidadPorSalud">
                                         <option value="Sano">Sano</option>
                                         <option value="Enfermo">Enfermo</option>
                                         <option value="En Tratamiento">En Tratamiento</option>
@@ -140,7 +140,7 @@ export const PecesModule = {
                                     <input v-model="form.fecha_nacimiento" type="date" class="form-control custom-input">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label small">Tamano (cm)</label>
+                                    <label class="form-label small">Tamaño (cm)</label>
                                     <input v-model.number="form.tamaño_cm" type="number" step="0.1" class="form-control custom-input">
                                 </div>
                                 <div class="col-md-6">
@@ -154,12 +154,12 @@ export const PecesModule = {
                                 <div class="col-md-6">
                                     <label class="form-label small">Disponible para venta</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" v-model="form.disponible_venta" id="disponibleVenta" :disabled="!esEstadoVendible(form.estado_salud)">
-                                        <label class="form-check-label" for="disponibleVenta">Si</label>
+                                        <input class="form-check-input" type="checkbox" v-model="form.disponible_venta" id="disponibleVenta" :disabled="!puedeSerDisponible()">
+                                        <label class="form-check-label" for="disponibleVenta">Sí</label>
                                     </div>
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label small">Descripcion corta (para chatbot)</label>
+                                    <label class="form-label small">Descripción corta (para chatbot)</label>
                                     <textarea v-model="form.descripcion_venta" class="form-control custom-input" rows="2" placeholder="Texto atractivo para mostrar en WhatsApp"></textarea>
                                 </div>
                                 <div class="col-md-6">
@@ -188,7 +188,7 @@ export const PecesModule = {
             </div>
         </div>
 
-        <!-- Modal detalle -->
+        <!-- Modal de DETALLE del pez -->
         <div class="modal fade" id="modalDetallePez" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content card-custom border-secondary">
@@ -214,16 +214,16 @@ export const PecesModule = {
                                         <tr><th>Especie:</th><td>{{ pezSeleccionado.especie_nombre || '?' }} - {{ pezSeleccionado.variedad || '?' }}</td></tr>
                                         <tr><th>Sexo:</th><td>{{ pezSeleccionado.sexo || '--' }}</td></tr>
                                         <tr><th>Acuario:</th><td>{{ pezSeleccionado.nombre_acuario || pezSeleccionado.id_acuario }}</td></tr>
-                                        <tr><th>Nacimiento:</th><td>{{ pezSeleccionado.fecha_nacimiento || 'Desconocida' }}</td></tr>
-                                        <tr><th>Tamano:</th><td>{{ pezSeleccionado.tamaño_cm ? pezSeleccionado.tamaño_cm + ' cm' : '--' }}</td></tr>
-                                        <tr><th>Color:</th><td>{{ pezSeleccionado.color_principal || '--' }}</td></tr>
-                                        <tr><th>Ingreso:</th><td>{{ pezSeleccionado.fecha_ingreso || '--' }}</td></tr>
-                                        <tr><th>Procedencia:</th><td>{{ pezSeleccionado.procedencia || '--' }}</td></tr>
-                                        <tr><th>Precio:</th><td class="text-success fw-bold">{{ formatPrice(pezSeleccionado.precio) }}</td></tr>
-                                        <tr><th>Disponible:</th><td><span :class="['badge', pezSeleccionado.disponible_venta ? 'bg-success' : 'bg-secondary']">{{ pezSeleccionado.disponible_venta ? 'Si' : 'No' }}</span></td></tr>
-                                        <tr><th>Descripcion venta:</th><td>{{ pezSeleccionado.descripcion_venta || 'Sin descripcion' }}</td></tr>
-                                        <tr><th>Salud:</th><td><span :class="getEstadoSaludClass(pezSeleccionado.estado_salud)">{{ pezSeleccionado.estado_salud || '--' }}</span></td></tr>
-                                        <tr><th>Observaciones:</th><td>{{ pezSeleccionado.observaciones_salud || '--' }}</td></td>
+                                        <tr><th>Nacimiento:</th><td>{{ pezSeleccionado.fecha_nacimiento || 'Desconocida' }}Ru%
+                                        <tr><th>Tamaño:</th><td>{{ pezSeleccionado.tamaño_cm ? pezSeleccionado.tamaño_cm + ' cm' : '--' }}Ru%
+                                        <tr><th>Color:</th><td>{{ pezSeleccionado.color_principal || '--' }}Ru%
+                                        <tr><th>Ingreso:</th><td>{{ pezSeleccionado.fecha_ingreso || '--' }}Ru%
+                                        <tr><th>Procedencia:</th><td>{{ pezSeleccionado.procedencia || '--' }}Ru%
+                                        <tr><th>Precio:</th><td class="text-success fw-bold">{{ formatPrice(pezSeleccionado.precio) }}Ru%</tr>
+                                        <tr><th>Disponible:</th><td><span :class="['badge', pezSeleccionado.disponible_venta ? 'bg-success' : 'bg-secondary']">{{ pezSeleccionado.disponible_venta ? 'Sí' : 'No' }}</span>Ru%</tr>
+                                        <tr><th>Descripción venta:</th><td>{{ pezSeleccionado.descripcion_venta || 'Sin descripción' }}Ru%</tr>
+                                        <tr><th>Salud:</th><td :class="getEstadoSaludClass(pezSeleccionado.estado_salud, true)">{{ pezSeleccionado.estado_salud || '--' }}Ru%</tr>
+                                        <tr><th>Observaciones:</th><td>{{ pezSeleccionado.observaciones_salud || '--' }}Ru%</tr>
                                     </table>
                                 </div>
                             </div>
@@ -281,25 +281,6 @@ export const PecesModule = {
         }
     },
     methods: {
-        esEstadoVendible(estado) {
-            return estado === 'Sano';
-        },
-        actualizarDisponibilidadPorEstado() {
-            // Si el estado no es 'Sano', entonces no puede estar disponible para venta
-            if (this.form.estado_salud !== 'Sano') {
-                this.form.disponible_venta = false;
-            }
-        },
-        getEstadoSaludClass(estado) {
-            const clases = {
-                'Sano': 'badge bg-success',
-                'Enfermo': 'badge bg-warning text-dark',
-                'En Tratamiento': 'badge bg-info text-dark',
-                'Fallecido': 'badge bg-secondary',
-                'Vendido': 'badge bg-danger'
-            };
-            return clases[estado] || 'badge bg-secondary';
-        },
         getImageUrl(photoPath) {
             if (!photoPath) return '';
             if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
@@ -311,7 +292,37 @@ export const PecesModule = {
             if (value === null || value === undefined) return 'N/A';
             return '$' + parseFloat(value).toFixed(2);
         },
+        getEstadoSaludClass(estado, isTableCell = false) {
+            const baseClass = isTableCell ? '' : 'badge ';
+            switch (estado) {
+                case 'Sano':
+                    return baseClass + 'badge-sano';  // define en tu CSS
+                case 'Enfermo':
+                    return baseClass + 'bg-warning text-dark';
+                case 'En Tratamiento':
+                    return baseClass + 'bg-info text-dark';
+                case 'Fallecido':
+                    return baseClass + 'bg-secondary';
+                case 'Vendido':
+                    return baseClass + 'bg-success';
+                default:
+                    return baseClass + 'bg-light text-dark';
+            }
+        },
+        puedeSerDisponible() {
+            const noVenta = ['Enfermo', 'En Tratamiento', 'Fallecido', 'Vendido'];
+            return !noVenta.includes(this.form.estado_salud);
+        },
+        actualizarDisponibilidadPorSalud() {
+            if (!this.puedeSerDisponible()) {
+                this.form.disponible_venta = false;
+            }
+        },
         enriquecerListaPeces() {
+            if (!Array.isArray(this.lista)) {
+                this.lista = [];
+                return;
+            }
             const especiesMap = new Map();
             this.especies.forEach(esp => {
                 especiesMap.set(esp.id_especie, {
@@ -325,6 +336,7 @@ export const PecesModule = {
             });
 
             this.lista = this.lista.map(pez => {
+                if (!pez) return null;
                 const especieInfo = especiesMap.get(pez.id_especie) || {};
                 return {
                     ...pez,
@@ -332,24 +344,28 @@ export const PecesModule = {
                     variedad: especieInfo.variedad || '',
                     nombre_acuario: acuariosMap.get(pez.id_acuario) || `ID: ${pez.id_acuario}`
                 };
-            });
+            }).filter(pez => pez !== null);
         },
         async cargarPeces() {
             this.cargando = true;
             try {
                 const res = await fetch(this.apiUrl + '/peces', { credentials: 'include' });
                 if (res.ok) {
-                    this.lista = await res.json();
+                    const data = await res.json();
+                    this.lista = Array.isArray(data) ? data : [];
                     if (this.especies.length && this.acuarios.length) {
                         this.enriquecerListaPeces();
                     }
                 } else if (res.status === 401) {
                     this.$root.cerrarSesion();
+                } else {
+                    this.lista = [];
                 }
             } catch (e) {
                 console.error(e);
+                this.lista = [];
             } finally {
-                setTimeout(() => { this.cargando = false; }, 300);
+                this.cargando = false;
             }
         },
         async cargarEspecies() {
@@ -401,23 +417,25 @@ export const PecesModule = {
             };
         },
         prepararEdicion(pez) {
+            if (!pez) return;
             this.editando = true;
             this.archivoFoto = null;
             this.form = JSON.parse(JSON.stringify(pez));
             if (this.form.fecha_ingreso) this.form.fecha_ingreso = this.form.fecha_ingreso.slice(0, 10);
             if (this.form.fecha_nacimiento) this.form.fecha_nacimiento = this.form.fecha_nacimiento.slice(0, 10);
             this.form.disponible_venta = !!this.form.disponible_venta;
-            // Asegurar que si el estado no es Sano, disponible_venta sea false
-            if (this.form.estado_salud !== 'Sano') this.form.disponible_venta = false;
+            this.actualizarDisponibilidadPorSalud();
         },
         verDetalle(pez) {
+            if (!pez) return;
             this.pezSeleccionado = JSON.parse(JSON.stringify(pez));
             if (this.pezSeleccionado.precio === undefined) this.pezSeleccionado.precio = null;
             const modal = new bootstrap.Modal(document.getElementById('modalDetallePez'));
             modal.show();
         },
         async simularVenta(pez) {
-            if (!confirm('Marcar a ' + (pez.nombre_pez || pez.id_pece) + ' como VENDIDO? Esto lo hara no disponible para venta.')) return;
+            if (!pez) return;
+            if (!confirm(`¿Marcar a ${pez.nombre_pez || pez.id_pece} como VENDIDO? Esto lo hará no disponible para venta.`)) return;
             this.cargando = true;
             try {
                 const payload = {
@@ -450,6 +468,9 @@ export const PecesModule = {
             let metodo = this.editando ? 'PUT' : 'POST';
             let body;
 
+            // Validar consistencia: si estado no apto, forzar disponible_venta = false
+            this.actualizarDisponibilidadPorSalud();
+
             if (this.archivoFoto) {
                 const formData = new FormData();
                 for (let key in this.form) {
@@ -476,7 +497,7 @@ export const PecesModule = {
                 });
                 if (res.ok) {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('modalPez'));
-                    modal.hide();
+                    if (modal) modal.hide();
                     await this.cargarPeces();
                 } else if (res.status === 401) {
                     this.$root.cerrarSesion();
@@ -492,7 +513,8 @@ export const PecesModule = {
             }
         },
         async confirmarBorrado(id) {
-            if (confirm('Borrar este pez?')) {
+            if (!id) return;
+            if (confirm('¿Borrar este pez?')) {
                 this.cargando = true;
                 try {
                     const res = await fetch(this.apiUrl + '/peces/' + id, { method: 'DELETE', credentials: 'include' });
