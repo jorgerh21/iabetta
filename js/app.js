@@ -1,6 +1,6 @@
 // Configuración
-const API_URL = '/api.php';   // Cambiar si es necesario (ej: '/bettas.php')
-const CDN_IMAGE_BASE = 'https://cdn.sitioz.com/imagenes/';
+const API_URL = 'https://api.sitioz.com/bettas.php';   // Cambiar si es necesario (ej: '/bettas.php')
+const CDN_IMAGE_BASE = 'https://cdn.sitioz.com/';
 
 // Variables globales
 let peces = [];
