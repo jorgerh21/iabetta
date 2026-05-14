@@ -1,13 +1,12 @@
 // Configuración
-const API_URL = 'https://api.sitioz.com/bettas.php';   // Cambiar si es necesario (ej: '/bettas.php')
+const API_URL = 'https://api.sitioz.com/bettas.php';        // Cambiar si el archivo PHP tiene otro nombre
 const CDN_IMAGE_BASE = 'https://cdn.sitioz.com/';
 
-// Variables globales
 let peces = [];
 let cart = [];
 let transportadoras = [];
 
-// Elementos DOM
+// Elementos del DOM
 const fishContainer = document.getElementById('fishListContainer');
 const searchInput = document.getElementById('searchInput');
 const viewCartBtn = document.getElementById('viewCartBtn');
@@ -20,10 +19,16 @@ const checkoutForm = document.getElementById('checkoutForm');
 const transportadoraSelect = document.getElementById('transportadoraId');
 const orderMessageDiv = document.getElementById('orderMessage');
 
-// Funciones auxiliares
+// Helper imagen
+function getImageUrl(path) {
+    if (!path) return null;
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    return CDN_IMAGE_BASE + path.replace(/^\/+/, '');
+}
+
 function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
+    return str.replace(/[&<>]/g, (m) => {
         if (m === '&') return '&amp;';
         if (m === '<') return '&lt;';
         if (m === '>') return '&gt;';
@@ -31,12 +36,7 @@ function escapeHtml(str) {
     });
 }
 
-function getImageUrl(path) {
-    if (!path) return null;
-    if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    return CDN_IMAGE_BASE + path.replace(/^\/+/, '');
-}
-
+// Carrito
 function updateCartUI() {
     const totalItems = cart.length;
     cartCounterSpan.innerText = totalItems;
@@ -45,7 +45,7 @@ function updateCartUI() {
 
 function renderCartModal() {
     if (cart.length === 0) {
-        cartItemsList.innerHTML = '<div class="alert">Carrito vacío</div>';
+        cartItemsList.innerHTML = '<div class="alert" style="text-align:center;">🛒 Tu carrito está vacío</div>';
         cartTotalDisplay.innerText = 'Total: $0';
         return;
     }
@@ -57,7 +57,7 @@ function renderCartModal() {
             <div class="cart-item">
                 <div><strong>${escapeHtml(item.nombre)}</strong><br>$${item.precio.toFixed(2)}</div>
                 <div class="cart-item-qty">
-                    <button data-idx="${idx}" data-delta="del">🗑️</button>
+                    <button data-idx="${idx}" data-delta="del"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </div>
         `;
@@ -78,7 +78,7 @@ function renderCartModal() {
 
 function addToCart(pez) {
     if (cart.some(i => i.id === pez.id)) {
-        alert('Este pez ya está en tu carrito. Solo puedes comprar un ejemplar de cada.');
+        alert('Este betta ya está en tu carrito. Solo puedes comprar un ejemplar por pedido.');
         return false;
     }
     cart.push({
@@ -91,7 +91,7 @@ function addToCart(pez) {
     return true;
 }
 
-// API calls
+// API
 async function loadPeces() {
     try {
         const res = await fetch(`${API_URL}/peces`);
@@ -100,7 +100,7 @@ async function loadPeces() {
         peces = Array.isArray(data) ? data : [];
         renderFishCatalog(searchInput.value);
     } catch (err) {
-        fishContainer.innerHTML = `<div class="loading">❌ Error cargando peces: ${err.message}</div>`;
+        fishContainer.innerHTML = `<div class="loading-spinner"><i class="fas fa-exclamation-triangle"></i> Error: ${err.message}</div>`;
     }
 }
 
@@ -118,23 +118,22 @@ async function loadTransportadoras() {
     }
 }
 
-// Renderizado de catálogo
+// Render galería
 function renderFishCatalog(filter = '') {
     if (!peces.length) {
-        fishContainer.innerHTML = '<div class="loading">🐟 No hay peces disponibles en este momento.</div>';
+        fishContainer.innerHTML = '<div class="loading-spinner">🐟 No hay peces disponibles en este momento.</div>';
         return;
     }
     const filtered = peces.filter(p => p.nombre.toLowerCase().includes(filter.toLowerCase()));
     if (filtered.length === 0) {
-        fishContainer.innerHTML = '<div class="loading">No se encontraron bettas con ese nombre.</div>';
+        fishContainer.innerHTML = '<div class="loading-spinner">No se encontraron bettas con ese nombre.</div>';
         return;
     }
-
     let html = '';
     filtered.forEach(pez => {
         const imagenCompleta = getImageUrl(pez.imagen);
-        const imageHtml = imagenCompleta ? 
-            `<img src="${escapeHtml(imagenCompleta)}" alt="${escapeHtml(pez.nombre)}">` : 
+        const imageHtml = imagenCompleta ?
+            `<img src="${escapeHtml(imagenCompleta)}" alt="${escapeHtml(pez.nombre)}">` :
             '<div class="no-image">🐠</div>';
         const yaEnCarrito = cart.some(i => i.id === pez.id);
         html += `
@@ -143,32 +142,32 @@ function renderFishCatalog(filter = '') {
                 <div class="fish-info">
                     <div class="fish-name">${escapeHtml(pez.nombre)}</div>
                     <div class="fish-price">$${parseFloat(pez.precio).toFixed(2)}</div>
-                    <button class="btn-add" data-id="${pez.id}" ${yaEnCarrito ? 'disabled style="background:#aaa; cursor:default;"' : ''}>
-                        ${yaEnCarrito ? '✓ Ya agregado' : '➕ Agregar al carrito'}
+                    <button class="btn-add" data-id="${pez.id}" ${yaEnCarrito ? 'disabled style="background:#adb5bd;"' : ''}>
+                        ${yaEnCarrito ? '<i class="fas fa-check"></i> Agregado' : '<i class="fas fa-cart-plus"></i> Agregar'}
                     </button>
                 </div>
             </div>
         `;
     });
     fishContainer.innerHTML = html;
-
     document.querySelectorAll('.btn-add:not([disabled])').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const id = parseInt(btn.dataset.id);
             const pez = peces.find(p => p.id === id);
             if (pez && addToCart(pez)) {
-                btn.innerText = '✓ Ya agregado';
+                btn.innerHTML = '<i class="fas fa-check"></i> Agregado';
                 btn.disabled = true;
+                btn.style.background = '#adb5bd';
             }
         });
     });
 }
 
-// Envío del pedido
+// Enviar pedido
 checkoutForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (cart.length === 0) {
-        alert('Tu carrito está vacío. Agrega peces antes de continuar.');
+        alert('Agrega al menos un betta para continuar.');
         return;
     }
     const nombre = document.getElementById('clienteNombre').value.trim();
@@ -178,28 +177,19 @@ checkoutForm.addEventListener('submit', async (e) => {
     const transportadora_id = parseInt(transportadoraSelect.value);
 
     if (!nombre || !email || !direccion || !transportadora_id) {
-        alert('Por favor completa: nombre, email, dirección y transportadora');
+        alert('Completa todos los campos obligatorios.');
         return;
     }
     if (!/^\S+@\S+\.\S+$/.test(email)) {
-        alert('Ingresa un email válido');
+        alert('Email inválido.');
         return;
     }
-
-    const items = cart.map(item => ({
-        pez_id: item.id,
-        precio_unitario: item.precio
-    }));
-
-    const payload = {
-        cliente: { nombre, email, telefono, direccion },
-        items: items,
-        transportadora_id: transportadora_id
-    };
+    const items = cart.map(item => ({ pez_id: item.id, precio_unitario: item.precio }));
+    const payload = { cliente: { nombre, email, telefono, direccion }, items, transportadora_id };
 
     const submitBtn = checkoutForm.querySelector('.btn-primary');
-    const originalText = submitBtn.innerText;
-    submitBtn.innerText = 'Procesando...';
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Procesando...';
     submitBtn.disabled = true;
     orderMessageDiv.style.display = 'none';
 
@@ -213,16 +203,16 @@ checkoutForm.addEventListener('submit', async (e) => {
         if (result.success) {
             orderMessageDiv.style.display = 'block';
             orderMessageDiv.className = 'alert';
-            orderMessageDiv.innerHTML = `✅ ¡Pedido exitoso! Factura #${result.numero_factura || result.factura_id}. Seguimiento: ${result.tracking}`;
+            orderMessageDiv.innerHTML = `<i class="fas fa-check-circle"></i> ¡Pedido exitoso! Factura #${result.numero_factura || result.factura_id}. Seguimiento: ${result.tracking}`;
             cart = [];
             updateCartUI();
             renderCartModal();
             checkoutForm.reset();
-            await loadPeces(); // recargar catálogo
+            await loadPeces();
             setTimeout(() => {
                 cartModal.style.display = 'none';
                 orderMessageDiv.style.display = 'none';
-            }, 4000);
+            }, 5000);
         } else {
             throw new Error(result.message || 'Error en el servidor');
         }
@@ -230,14 +220,15 @@ checkoutForm.addEventListener('submit', async (e) => {
         orderMessageDiv.style.display = 'block';
         orderMessageDiv.className = 'alert';
         orderMessageDiv.style.background = '#ffe0e0';
-        orderMessageDiv.innerHTML = `❌ ${err.message}`;
+        orderMessageDiv.style.color = '#c00';
+        orderMessageDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${err.message}`;
     } finally {
-        submitBtn.innerText = originalText;
+        submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
     }
 });
 
-// Eventos modales y búsqueda
+// Eventos modales
 viewCartBtn.onclick = () => {
     renderCartModal();
     cartModal.style.display = 'flex';
@@ -246,6 +237,6 @@ closeModalBtn.onclick = () => cartModal.style.display = 'none';
 window.onclick = (e) => { if (e.target === cartModal) cartModal.style.display = 'none'; };
 searchInput.addEventListener('input', (e) => renderFishCatalog(e.target.value));
 
-// Inicialización
+// Inicio
 loadPeces();
 loadTransportadoras();
